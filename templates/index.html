@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сервис сокращения ссылок</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Сокращатель ссылок</h1>
+            <p>Сделайте ваши длинные ссылки короткими и удобными!</p>
+        </header>
+
+        <main>
+            <div class="shortener-form">
+                <input type="url" id="urlInput" placeholder="Введите длинную ссылку..." required>
+                <button onclick="shortenUrl()">Сократить</button>
+            </div>
+
+            <div id="result" class="result hidden">
+                <h3>Ваша короткая ссылка:</h3>
+                <div class="short-url">
+                    <a id="shortLink" href="" target="_blank"></a>
+                    <button onclick="copyToClipboard()">📋 Копировать</button>
+                </div>
+                <div class="stats-link">
+                    <a id="statsLink" href="">📊 Посмотреть статистику</a>
+                </div>
+            </div>
+
+            <div id="error" class="error hidden">
+                <p id="errorMessage"></p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Разработано в рамках практической работы по DevOps</p>
+        </footer>
+    </div>
+
+    <script>
+        async function shortenUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showError('Пожалуйста, введите ссылку');
+                return;
+            }
+
+            try {
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    hideError();
+                    displayResult(data);
+                } else {
+                    showError(data.error || 'Произошла ошибка');
+                }
+            } catch (error) {
+                showError('Ошибка сети. Попробуйте еще раз.');
+            }
+        }
+
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            const shortLink = document.getElementById('shortLink');
+            const statsLink = document.getElementById('statsLink');
+
+            shortLink.href = data.short_url;
+            shortLink.textContent = data.short_url;
+            
+            statsLink.href = `/stats/${data.short_code}`;
+            
+            resultDiv.classList.remove('hidden');
+        }
+
+        function copyToClipboard() {
+            const shortLink = document.getElementById('shortLink');
+            navigator.clipboard.writeText(shortLink.href)
+                .then(() => {
+                    alert('Ссылка скопирована в буфер обмена!');
+                })
+                .catch(err => {
+                    console.error('Ошибка копирования: ', err);
+                });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            const errorMessage = document.getElementById('errorMessage');
+            const resultDiv = document.getElementById('result');
+            
+            errorMessage.textContent = message;
+            errorDiv.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('error');
+            errorDiv.classList.add('hidden');
+        }
+
+        // Enter key support
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                shortenUrl();
+            }
+        });
+    </script>
+</body>
+</html>

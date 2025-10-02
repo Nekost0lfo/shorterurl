@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # Для продакшена можно добавить PostgreSQL вместо SQLite
+  # postgres:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_DB: url_shortener
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
