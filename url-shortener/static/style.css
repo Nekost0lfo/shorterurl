@@ -9,10 +9,11 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 20px;
+    color: #333;
 }
 
 .container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
     background: white;
     border-radius: 15px;
@@ -80,7 +81,8 @@ button:hover {
     background: #f8f9fa;
     padding: 25px;
     border-radius: 10px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #28a745;
+    margin-bottom: 20px;
 }
 
 .result h3 {
@@ -93,6 +95,7 @@ button:hover {
     align-items: center;
     gap: 15px;
     margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .short-url a {
@@ -100,6 +103,7 @@ button:hover {
     text-decoration: none;
     font-weight: bold;
     font-size: 1.1em;
+    word-break: break-all;
 }
 
 .short-url a:hover {
@@ -121,6 +125,48 @@ button:hover {
     padding: 15px;
     border-radius: 8px;
     border-left: 4px solid #dc3545;
+    margin-bottom: 20px;
+}
+
+.health-check {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.health-status {
+    background: #e7f3ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: left;
+}
+
+.health-status h4 {
+    margin-bottom: 10px;
+    color: #0056b3;
+}
+
+.health-status ul {
+    list-style: none;
+}
+
+.health-status li {
+    margin-bottom: 5px;
+}
+
+.status-healthy {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-unhealthy {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.status-unknown {
+    color: #ffc107;
+    font-weight: bold;
 }
 
 .hidden {
@@ -146,5 +192,10 @@ footer {
     
     body {
         padding: 10px;
+    }
+    
+    .short-url {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

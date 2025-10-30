@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # NGINX Load Balancer
+  nginx:
+    image: nginx:alpine
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - url-shortener
+      - analytics-service
+      - notification-service
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    networks:
+      - url-shortener-network
+
+  # Основной сервис URL Shortener
+  url-shortener:
+    build: ./url-shortener
+    environment:
+      - FLASK_ENV=production
+      - ANALYTICS_SERVICE_URL=http://analytics-service:5001
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5002
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    networks:
+      - url-shortener-network
+    volumes:
+      - url-shortener-data:/app/data
+
+  # Сервис аналитики
+  analytics-service:
+    build: ./analytics-service
+    environment:
+      - FLASK_ENV=production
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    networks:
+      - url-shortener-network
+    volumes:
+      - analytics-data:/app/data
+
+  # Сервис уведомлений
+  notification-service:
+    build: ./notification-service
+    environment:
+      - FLASK_ENV=production
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    networks:
+      - url-shortener-network
+    volumes:
+      - notification-data:/app/data
+
+networks:
+  url-shortener-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  url-shortener-data:
+    driver: local
+  analytics-data:
+    driver: local
+  notification-data:
+    driver: local
