@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сервис сокращения ссылок</title>
+    <title>URL Shortener</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚀 Сокращатель ссылок</h1>
-            <p>Сделайте ваши длинные ссылки короткими и удобными!</p>
+            <h1>🔗 URL Shortener</h1>
+            <p>Микросервисная архитектура с Docker</p>
         </header>
 
         <main>
             <div class="shortener-form">
-                <input type="url" id="urlInput" placeholder="Введите длинную ссылку..." required>
-                <button onclick="shortenUrl()">Сократить</button>
+                <input type="url" id="urlInput" placeholder="https://example.com" required>
+                <button onclick="shortenUrl()">Сократить ссылку</button>
             </div>
 
             <div id="result" class="result hidden">
@@ -26,18 +26,19 @@
                     <button onclick="copyToClipboard()">📋 Копировать</button>
                 </div>
                 <div class="stats-link">
-                    <a id="statsLink" href="">📊 Посмотреть статистику</a>
+                    <a id="statsLink" href="">📊 Статистика</a>
                 </div>
             </div>
 
             <div id="error" class="error hidden">
                 <p id="errorMessage"></p>
             </div>
-        </main>
 
-        <footer>
-            <p>Разработано в рамках практической работы по DevOps</p>
-        </footer>
+            <div class="health-check">
+                <button onclick="checkHealth()">🔍 Проверить статус сервисов</button>
+                <div id="healthStatus" class="health-status hidden"></div>
+            </div>
+        </main>
     </div>
 
     <script>
@@ -96,6 +97,26 @@
                 .catch(err => {
                     console.error('Ошибка копирования: ', err);
                 });
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                const healthStatus = document.getElementById('healthStatus');
+                healthStatus.innerHTML = `
+                    <h4>Статус сервисов:</h4>
+                    <ul>
+                        <li>Основной сервис: <span class="status-${data.main_service}">${data.main_service}</span></li>
+                        <li>Сервис аналитики: <span class="status-${data.analytics_service}">${data.analytics_service}</span></li>
+                        <li>Сервис уведомлений: <span class="status-${data.notification_service}">${data.notification_service}</span></li>
+                    </ul>
+                `;
+                healthStatus.classList.remove('hidden');
+            } catch (error) {
+                console.error('Health check failed:', error);
+            }
         }
 
         function showError(message) {

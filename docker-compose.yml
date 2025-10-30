@@ -1,26 +1,96 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
+  # Основной сервис URL Shortener
+  url-shortener:
+    build: ./url-shortener
+    container_name: url-shortener
     ports:
       - "5000:5000"
     environment:
       - FLASK_ENV=development
+      - ANALYTICS_SERVICE_URL=http://analytics-service:5001
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5002
     volumes:
-      - .:/app
+      - url-shortener-data:/app/data
+    depends_on:
+      - analytics-service
+      - notification-service
+    networks:
+      - url-shortener-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Для продакшена можно добавить PostgreSQL вместо SQLite
-  # postgres:
-  #   image: postgres:13
-  #   environment:
-  #     POSTGRES_DB: url_shortener
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: password
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   restart: unless-stopped
+  # Сервис аналитики
+  analytics-service:
+    build: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - analytics-data:/app/data
+    networks:
+      - url-shortener-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5001/health\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-# volumes:
-#   postgres_data:
+  # Сервис уведомлений
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - notification-data:/app/data
+    networks:
+      - url-shortener-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5002/health\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # NGINX Reverse Proxy
+  nginx:
+    build: ./nginx
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    depends_on:
+      - url-shortener
+      - analytics-service
+      - notification-service
+    networks:
+      - url-shortener-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  url-shortener-network:
+    driver: bridge
+
+volumes:
+  url-shortener-data:
+  analytics-data:
+  notification-data:
